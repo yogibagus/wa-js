@@ -1,6 +1,7 @@
 const {
     Client,
-    LocalAuth
+    LocalAuth,
+    MessageMedia
 } = require('whatsapp-web.js');
 require('dotenv').config();
 const qrcode = require('qrcode-terminal');
@@ -9,7 +10,7 @@ const https = require('https');
 const NewsAPI = require('newsapi');
 const newsapi = new NewsAPI(process.env.NEWS_API_KEY);
 // Open AI
-const { Configuration, OpenAIApi } = require("openai");
+const { Configuration, OpenAIApi} = require("openai");
 const configuration = new Configuration({
   apiKey: process.env.OPENAI_API_KEY,
 });
@@ -90,6 +91,11 @@ client.on('message', async msg => {
     // OPEN AI chatbot
     else if (msg.body.startsWith('!cb ')) {
         const query = msg.body.split('!cb')[1];
+        // check if query is empty
+        if (query === '') {
+            client.sendMessage(msg.from, '🤖 Ketik !cb <pesan>');
+            return false;
+        }
         const openai = new OpenAIApi(configuration);
         const prompt = "Human: " + query + "\nBot: ";
         const response = await openai.createCompletion({
@@ -101,8 +107,28 @@ client.on('message', async msg => {
         // count is the world more than 100, give the user a warning
         client.sendMessage(msg.from, "🤖 " + response.data.choices[0].text);
         if (response.data.choices[0].text.split(' ').length > 100) {
-            client.sendMessage(msg.from, 'WARNING: The response is too long, please try again with a shorter prompt.');
+            client.sendMessage(msg.from, '🤖 WARNING: The response is too long, please try again with a shorter prompt.');
         }
+    }
+    // OPEN AI Generate Image
+    else if (msg.body.startsWith('!img ')) {
+        msg.reply('🤖 Generating image, it may take a while....');
+        const query = msg.body.split('!img')[1];
+        // check if the query is empty
+        if (query === '') {
+            msg.reply('🤖 Please enter a valid prompt. e.g. !img a dog with a ball');
+            return false;
+        }
+        const openai = new OpenAIApi(configuration);
+        const response = await openai.createImage({
+            prompt: query,
+            n: 1,
+            size: "256x256",
+          });
+          image_url = response.data.data[0].url;
+          const media = await MessageMedia.fromUrl(image_url);
+          msg.reply(media);
+
     }
 });
 
