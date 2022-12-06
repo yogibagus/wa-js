@@ -3,10 +3,7 @@ const {
     LocalAuth
 } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
-const {
-    https,
-    get
-} = require('https');
+const https = require('https');
 const NewsAPI = require('newsapi');
 const newsapi = new NewsAPI('84dd02731f5d4994925eac88318ecff4');
 
