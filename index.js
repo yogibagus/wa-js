@@ -2,10 +2,17 @@ const {
     Client,
     LocalAuth
 } = require('whatsapp-web.js');
+require('dotenv').config();
 const qrcode = require('qrcode-terminal');
 const https = require('https');
+// News api
 const NewsAPI = require('newsapi');
-const newsapi = new NewsAPI('84dd02731f5d4994925eac88318ecff4');
+const newsapi = new NewsAPI(process.env.NEWS_API_KEY);
+// Open AI
+const { Configuration, OpenAIApi } = require("openai");
+const configuration = new Configuration({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 var globalDate = new Date();
 
@@ -79,8 +86,23 @@ client.on('message', async msg => {
 
             client.sendMessage(msg.from, message);
         });
-    } else if (msg.body.includes('!') && !msg.body.startsWith('!berita ')) {
-        msg.reply('UDAH WOY !');
+    }
+    // OPEN AI chatbot
+    else if (msg.body.startsWith('!cb ')) {
+        const query = msg.body.split('!cb')[1];
+        const openai = new OpenAIApi(configuration);
+        const prompt = "Human: " + query + "\nBot: ";
+        const response = await openai.createCompletion({
+            model: "text-davinci-003",
+            prompt: prompt,
+            temperature: 0,
+            max_tokens: 100,
+          });
+        // count is the world more than 100, give the user a warning
+        client.sendMessage(msg.from, "🤖 " + response.data.choices[0].text);
+        if (response.data.choices[0].text.split(' ').length > 100) {
+            client.sendMessage(msg.from, 'WARNING: The response is too long, please try again with a shorter prompt.');
+        }
     }
 });
 

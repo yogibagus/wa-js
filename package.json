@@ -1,7 +1,9 @@
 {
   "dependencies": {
+    "dotenv": "^16.0.3",
     "express": "^4.18.2",
     "newsapi": "^2.4.1",
+    "openai": "^3.1.0",
     "qrcode-terminal": "^0.12.0",
     "whatsapp-web.js": "^1.18.4"
   },
