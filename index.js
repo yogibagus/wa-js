@@ -43,7 +43,9 @@ client.on('ready', () => {
 });
 
 client.on('message', async msg => {
-    console.log(msg);
+    // console.log(msg);
+    // log sender, notifyname, and message
+    console.log(msg.from + ' : ' + msg.body);
 
     if (msg.body === '!help') {
         msg.reply('cari SENDIRI lah !');
@@ -89,29 +91,35 @@ client.on('message', async msg => {
         });
     }
     // OPEN AI chatbot
-    else if (msg.body.startsWith('!cb ')) {
+    else if (msg.body.startsWith('!cb')) {
         const query = msg.body.split('!cb')[1];
         // check if query is empty
         if (query === '') {
             client.sendMessage(msg.from, '🤖 Ketik !cb <pesan>');
             return false;
         }
-        const openai = new OpenAIApi(configuration);
-        const prompt = "Human: " + query + "\nBot: ";
-        const response = await openai.createCompletion({
-            model: "text-davinci-003",
-            prompt: prompt,
-            temperature: 0,
-            max_tokens: 100,
-          });
-        // count is the world more than 100, give the user a warning
-        client.sendMessage(msg.from, "🤖 " + response.data.choices[0].text);
-        if (response.data.choices[0].text.split(' ').length > 100) {
-            client.sendMessage(msg.from, '🤖 WARNING: The response is too long, please try again with a shorter prompt.');
+        try {
+            const openai = new OpenAIApi(configuration);
+            const prompt = "Human: " + query + "\nBot: ";
+            const response = await openai.createCompletion({
+                model: "text-davinci-003",
+                prompt: prompt,
+                temperature: 0,
+                max_tokens: 1000,
+              });
+            // count is the world more than 100, give the user a warning
+            msg.reply('🤖 ' + response.data.choices[0].text);
+            console.log("Bot Answer: " + response.data.choices[0].text);
+            if (response.data.choices[0].text.split(' ').length > 100) {
+                client.sendMessage(msg.from, '🤖 WARNING: The response is too long, please try again with a shorter prompt.');
+            }
+        } catch (error) {
+            console.log(error);
+            msg.reply('🤖 Error: ' + error);
         }
     }
     // OPEN AI Generate Image
-    else if (msg.body.startsWith('!img ')) {
+    else if (msg.body.startsWith('!img')) {
         msg.reply('🤖 Generating image, it may take a while....');
         const query = msg.body.split('!img')[1];
         // check if the query is empty
@@ -119,16 +127,21 @@ client.on('message', async msg => {
             msg.reply('🤖 Please enter a valid prompt. e.g. !img a dog with a ball');
             return false;
         }
-        const openai = new OpenAIApi(configuration);
-        const response = await openai.createImage({
-            prompt: query,
-            n: 1,
-            size: "256x256",
-          });
-          image_url = response.data.data[0].url;
-          const media = await MessageMedia.fromUrl(image_url);
-          msg.reply(media);
-
+        try {
+            const openai = new OpenAIApi(configuration);
+            const response = await openai.createImage({
+                prompt: query,
+                n: 1,
+                size: "512x512",
+              });
+            // check if the response is error
+            image_url = response.data.data[0].url;
+            const media = await MessageMedia.fromUrl(image_url);
+            msg.reply(media);
+        } catch (error) {
+            console.log(error);
+            msg.reply('🤖 Error: ' + error);
+        }
     }
 });
 
